@@ -23,6 +23,23 @@ image itself to enhance the accuracy and consistency of the model in processing 
 images. Extensive experiments on three publicly available medical image datasets 
 demonstrate that our method exhibits superior performance compared to state-of-the-art methods.
 
+### Dependencies
+Please install following essential dependencies:
+```
+dcm2nii
+json5==0.8.5
+jupyter==1.0.0
+nibabel==2.5.1
+numpy==1.22.0
+opencv-python==4.5.5.62
+Pillow>=8.1.1
+sacred==0.8.2
+scikit-image==0.18.3
+SimpleITK==1.2.3
+torch==1.10.2
+torchvision=0.11.2
+tqdm==4.62.3
+```
 # Getting started
 
 Pre-processing is performed according to [Ouyang et al.](https://github.com/cheng-01037/Self-supervised-Fewshot-Medical-Image-Segmentation/tree/2f2a22b74890cb9ad5e56ac234ea02b9f1c7a535) and we follow the procedure on their github repository.
