@@ -3,25 +3,7 @@ Code for paper： DCOP-Net: A dual-filter cross attention and onion pooling netw
 few-shot medical image segmentation
 
 #### Abstract
-Few-shot learning shows marvelous performance in medical image segmentation. 
-However, existing few-shot medical image segmentation (FSMIS) models make it 
-challenging to utilize the query image information fully, leading to prototype bias and 
-low generalization ability of the models. To cope with these issues, we propose a dual-filter cross attention and onion pooling network (DCOP-Net) for FSMIS, which 
-includes a prototype learning stage and a segmentation stage in its processing flow. 
-Specifically, during the prototype learning stage, we design a dual-filter cross attention 
-module (DFCA) to avoid the entanglement between query background (BG) features 
-and support foreground (FG) features, thereby effectively integrating query FG features 
-into support prototypes. We specially design an onion pooling module (OP) that 
-combines eroding mask operations with masked average pooling (MAP) to learn 
-multiple prototypes. This module retains the contextual information of support features 
-within prototypes, alleviating the prototype bias issue. In the subsequent segmentation 
-stage, we design a parallel threshold perceptual module (PTP) to enhance the quality of 
-the threshold for distinguishing FG from BG. It is intended to process multiple inputs 
-through multiple paths and reduce the impact of noise in the query image, thus ensuring 
-accurate segmentation of the query image. Furthermore, we design a query self-reference regularization (QSR) that feeds query image information back into the query 
-image itself to enhance the accuracy and consistency of the model in processing query 
-images. Extensive experiments on three publicly available medical image datasets 
-demonstrate that our method exhibits superior performance compared to state-of-the-art methods.
+Few-shot learning has demonstrated remarkable performance in medical image segmentation. However, existing few-shot medical image segmentation (FSMIS) models often struggle to fully utilize query image information, leading to prototype bias and limited generalization ability. To address these issues, we propose the Dual-Filter Cross Attention and Onion Pooling Network (DCOP-Net) for FSMIS. DCOP-Net consists of a prototype learning stage and a segmentation stage. During the prototype learning stage, we introduce a Dual-Filter Cross Attention (DFCA) module to avoid entanglement between query background features and support foreground features, effectively integrating query foreground features into support prototypes. Additionally, we design an Onion Pooling (OP) module that combines eroding mask operations with masked average pooling to generate multiple prototypes, preserving contextual information and mitigating prototype bias. In the segmentation stage, we present a Parallel Threshold Perception (PTP) module to generate robust thresholds for foreground and background differentiation and a Query Self-Reference Regularization (QSR) strategy to enhance model accuracy and consistency. Extensive experiments on three publicly available medical image datasets demonstrate that DCOP-Net outperforms state-of-the-art methods, exhibiting superior segmentation and generalization capabilities.
 
 ### Dependencies
 Please install following essential dependencies:
