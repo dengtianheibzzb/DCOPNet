@@ -9,7 +9,7 @@ from .encoder import Res101Encoder
 from .attention import MultiHeadAttention
 from .attention import MultiLayerPerceptron
 
-##on池化
+##onion pool
 def erode_mask(mask, kernel_size=3, iterations=1):
     """
     Erode a binary mask using max pooling on its inverse.
@@ -30,33 +30,6 @@ def erode_mask(mask, kernel_size=3, iterations=1):
         # Invert the result back
         mask = 1 - pooled_inverted_mask
     return mask
-# def generate_onion_layers(foreground_mask, num_layers):
-#     """
-#     Generate "onion" layers of foreground prototypes using PyTorch.
-#
-#     Args:
-#     - foreground_mask (torch.Tensor): Binary mask of the foreground (1 for foreground, 0 for background) with shape (1, 64, 64).
-#     - num_layers (int): Number of layers (prototypes) to generate.
-#
-#     Returns:
-#     - List of torch.Tensor: A list of binary masks, each representing a layer of the "onion".
-#     """
-#     layers = []
-#     current_mask = foreground_mask.clone()
-#
-#     for i in range(num_layers):
-#
-#         # Check if there's any foreground left
-#         if torch.sum(current_mask) == 0:
-#             break
-#         if i!= 0:
-#         # Add the current layer
-#            layers.append(current_mask.clone())
-#
-#         # Erode the current mask to create the next inner layer
-#         current_mask = erode_mask(current_mask, kernel_size=2, iterations=1)
-#        # print(current_mask.shape)
-#     return layers
 
 def generate_onion_layers(foreground_mask, num_layers):
     """
@@ -139,10 +112,10 @@ class ThresholdNet(nn.Module):
         x = nn.functional.max_pool2d(x, 2)
         #print(x.shape)
         x = x.view(x.size(0), -1)
-        #print(x.shape)
         x = self.fc(x)
         return x
 
+#PTP module
 class ParallelConvNet(nn.Module):
     def __init__(self):
         super(ParallelConvNet, self).__init__()
@@ -223,35 +196,7 @@ class FewShotSeg(nn.Module):
 
         return torch.stack(pred, dim=1)  # N x Wa x H' x W'
 
-    def generate_CATprior(self, query_feat, supp_feat, s_y, fts_size):
-        bsize, _, sp_sz, _ = query_feat.size()[:]
-        cosine_eps = 1e-7
-
-        tmp_mask = (s_y == 1).float().unsqueeze(1)
-        tmp_mask = F.interpolate(tmp_mask, size=(fts_size[0], fts_size[1]), mode='bilinear', align_corners=True)
-
-        tmp_supp_feat = supp_feat * tmp_mask
-        q = self.high_avg_pool(query_feat.flatten(2).transpose(-2, -1))  # [bs, h*w, 256]
-        s = self.high_avg_pool(tmp_supp_feat.flatten(2).transpose(-2, -1))  # [bs, h*w, 256]
-
-        tmp_query = q
-        tmp_query = tmp_query.contiguous().permute(0, 2, 1)  # [bs, 256, h*w]
-        tmp_query_norm = torch.norm(tmp_query, 2, 1, True)
-
-        tmp_supp = s
-        tmp_supp = tmp_supp.contiguous()
-        tmp_supp = tmp_supp.contiguous()
-        tmp_supp_norm = torch.norm(tmp_supp, 2, 2, True)
-
-        similarity = torch.bmm(tmp_supp, tmp_query) / (torch.bmm(tmp_supp_norm, tmp_query_norm) + cosine_eps)
-        similarity = similarity.max(1)[0].view(bsize, sp_sz * sp_sz)
-        similarity = (similarity - similarity.min(1)[0].unsqueeze(1)) / (
-                similarity.max(1)[0].unsqueeze(1) - similarity.min(1)[0].unsqueeze(1) + cosine_eps)
-        corr_query = similarity.view(bsize, 1, sp_sz, sp_sz)
-        corr_query = F.interpolate(corr_query, size=(fts_size[0], fts_size[1]), mode='bilinear', align_corners=True)
-        corr_query_mask = corr_query.unsqueeze(1)
-        return corr_query_mask
-
+    #generate prior mask
     def Newgenerate_prior(self, query_feat,fts_size,fore_supp_pro):
         ### query_feat [1,256,32,32], supp_feat [1,256,32,32]
         ###        s_y [1,256，256],   fts_size [32,32] fore_supp_pro
@@ -282,8 +227,6 @@ class FewShotSeg(nn.Module):
         self.criterion_MSE = nn.MSELoss()
         self.n_queries = len(qry_imgs)
         self.thresh_pred = torch.Tensor([-10.5])
-        #self.thresh_pred = torch.Tensor([-15.0])
-        #self.thresh_pred1 = Parameter(torch.Tensor([-10.0]))
         self.n_ways = len(supp_imgs)
         self.n_shots = len(supp_imgs[0])
         self.n_queries = len(qry_imgs)
@@ -328,8 +271,8 @@ class FewShotSeg(nn.Module):
         qry_fts = img_fts[self.n_ways * self.n_shots * supp_bs:].view(  # B x N x C x H' x W'
             qry_bs, self.n_queries, -1, *img_fts.shape[-2:])
 
-#####
-        # Reshape for self_attention
+##### DFCA module
+        # Reshape for attention
         supp_fts_reshaped = supp_fts.view(-1, *supp_fts.shape[-3:])  # (Wa*Sh*B) x C x H' x W'
         qry_fts_reshaped = qry_fts.view(-1, *qry_fts.shape[-3:])  # (N*B) x C x H' x W'
 
@@ -346,12 +289,9 @@ class FewShotSeg(nn.Module):
         fore_supp_pro = self.getFeatures(supp_fts1, fore_mask1)
        # corr_query_mask = self.Newgenerate_prior(qry_fts1, (64, 64), fore_supp_pro)
         fts_size = qry_fts[0][0].shape[-2:]
-        #print(fts_size[0], fts_size[1])
         corr_query_mask = self.Newgenerate_prior(qry_fts1,  (fts_size[0], fts_size[1]), fore_supp_pro)
 
-        #corr_query_mask = self.generate_CATprior(qry_fts1, supp_fts1,fore_mask1,(fts_size[0], fts_size[1]))
-
-        #step2
+        #step2 feature fusion
 
         fore_supp_pro = fore_supp_pro.unsqueeze(-1).unsqueeze(-1).unsqueeze(0)  # 1,1,512,1,1
         fore_supp_pro = fore_supp_pro.expand_as(qry_fts)  # 1,1, 512, 64,64
@@ -375,7 +315,7 @@ class FewShotSeg(nn.Module):
         qry_fts_reshaped = qry_fts.view(-1, *qry_fts.shape[2:])
 
 
-        # Pass through CrossAttention
+        #step3 Pass through CrossAttention
         supp_fts_out, qry_fts_out = self.CrossAttention_gate(supp_fts_reshaped, qry_fts_reshaped, fore_mask1_pooled,
                                                              corr_query_mask.squeeze(0).squeeze(0))
         #print(supp_fts_reshaped.shape, supp_fts_out.shape)
@@ -384,10 +324,7 @@ class FewShotSeg(nn.Module):
 
         supp_fts = supp_fts_out.unsqueeze(0).unsqueeze(0)
 
-######
-
-        # Get threshold
-
+###### # Get adaptive threshold
         self.t = thre_qry   # t for query features
         self.thresh_pred = [self.t for _ in range(self.n_ways)]
         self.t_ = thre_sup  # t for support features
@@ -561,7 +498,7 @@ class FewShotSeg(nn.Module):
 
         return fts_fg
 
-    def NewupdatePrototype(self, qry, pred_mask,img_size):
+    def NewupdatePrototype(self, qry, pred_mask,img_size): #QSR loss
 
         qry_protos = self.getNewProtos(qry, pred_mask)
         anom_s = self.negSim(qry, qry_protos)
@@ -633,7 +570,7 @@ class FewShotSeg(nn.Module):
         """
 
         fg_protos1 = []
-        num_layers = 4 # Number of layers to generate #一般为4  所以生成三个圈 ，然后再+ 最外围的一个
+        num_layers = 4 # Number of layers to generate
         layers = generate_onion_layers(sup_fg.unsqueeze(0).float(), num_layers)
         ps = self.getFeatures(sup_fts, sup_fg)  #sup_fts, sup_fg
         fg_protos1.append(ps)  # n,1,c
