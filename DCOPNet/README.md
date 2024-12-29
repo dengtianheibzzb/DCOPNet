@@ -12,11 +12,11 @@ During the prototype learning stage, we design a Dual-Filter Cross Attention (DF
 In the segmentation stage, we present a Parallel Threshold Perception (PTP) module and a Query Self-Reference Regularization (QSR) strategy.
 Specifically,
 
-1)The DFCA module utilizes a priori masks and adaptive attention filtering methods to filter background factors in the feature graph from two aspects, effectively integrating query foreground features into support features.
+1)The DFCA module utilizes a prior mask and adaptive attention filtering method to filter background factors in the feature map from two aspects, effectively integrating query foreground features into support features.
 
-2)The OP module generates multiple masks using erode pooling and combines  masked average pooling to extrate multiple prototypes, effectively preserve contextual information in the feature map.
-                                                                                                                   
-3)The PTP module combines maximum pooling and average pooling dual paths to process the features in parallel. Finally, it obtains a robust threshold that effectively distinguishes between foreground and background after full learning in the fully connected layer.
+2)The OP module generates multiple masks using the proposed erode pooling and combines masked average pooling to extrate multiple prototypes, effectively preserve contextual information in the feature map.
+
+3)The PTP module combines maximum pooling and average pooling dual paths to process the features. After processing the spliced results in the fully connected layer, the module obtains robust parameters for thresholding the query image anomaly score map.
 
 4)The QSR strategy utilizes the prediction results and the query image to generate a prototype, and then segments the query image to obtain a new loss. This forms a feedback mechanism for the model and improves the accuracy and consistency of the segmentation of the model.
 
